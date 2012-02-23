@@ -45,8 +45,6 @@ $t->displayError(false);
 $t->render('unknow.block.1');
 $t->render('unknow.block.2');
 
-
-
 // Cette fonction renvoie une taille facilement lisible (ex: 1024o renverra 1ko)
 function get_human_readable_size($bytes) {
     global $lang;
@@ -70,6 +68,31 @@ function hello($name = null) {
     return "Hello $name !";
 }
 $t->registerFunction('hello', 'hello');
+
+
+// Enregistre une classe d'helper
+class Hyla_Tpl_DateHelpers {
+
+    public function varAsDate($string) {
+        return strftime('%d/%m/%Y', strtotime($string));
+    }
+
+    public function getDate($string, $format) {
+        return strftime($format, strtotime($string));
+    }
+
+    public function today($format = '%A, %e %B %Y') {
+        return self::getDate('now', $format);
+    }
+
+    public function varIsAVeryLongWordToTestNameNormalization($string) {
+        return $string;
+    }
+}
+$t->setVar('tomorrow','tomorrow');
+$t->registerHelpers(new Hyla_Tpl_DateHelpers());
+
+
 
 $t->render('b4');
 $t->render('b4');

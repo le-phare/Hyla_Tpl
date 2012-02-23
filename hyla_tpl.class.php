@@ -53,6 +53,11 @@ class Hyla_Tpl {
 
     const VERSION = '0.7.1';
 
+    const HELPER_ASIS       = 1;
+    const HELPER_CAMELCASE  = 2;
+    const HELPER_UNDERSCORE = 4;
+    const HELPER_DASH       = 8;
+
     function __construct($path = '.') {
 
         $this->path = $path;
@@ -285,6 +290,86 @@ class Hyla_Tpl {
             if ($var) {
                 $ret = $this->registerVarFunction($name, $func);
             }
+        }
+
+        return $ret;
+    }
+
+    /**
+     * Register a batch of methods using registerVarFunction or registerFunction
+     *
+     * Example Usage:
+     *
+     *    class Hyla_Tpl_DateHelpers {
+     *
+     *       public function varAsDate($string) {
+     *           return strftime('%d/%m/%Y', strtotime($string));
+     *       }
+     *
+     *       public function getDate($string, $format) {
+     *           return strftime($format, strtotime($string));
+     *       }
+     *
+     *       public function today($format) {
+     *           return self::getDate(mktime(), $format);
+     *       }
+     *
+     *    }
+     *
+     *    $t = new Hyla_Tpl();
+     *    $t->registerHelpers(new Hyla_Tpl_DateHelpers);
+     *
+     *
+     * @param object $helper_class
+     * @param integer $name_policy
+     * @return boolean
+     */
+    public function registerHelpers($helper_class, $name_policy = 1) {
+        $ret = false;
+        if (!is_object($helper_class)) {
+            $this->_error('Given helper class is not an object.');
+        } else {
+            $reflector = new ReflectionClass($helper_class);
+            foreach ($reflector->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+                if (preg_match('/^([a-z]+){0,1}([A-Za-z0-9_]+)/', $method->name, $m)) {
+                    list($match, $type, $helper_name) = $m;
+                    $callback = array($helper_class, $method->name);
+
+                    switch ($type) {
+                        case 'var' : {
+                            $helper_function = 'registerVarFunction';
+                            break;
+                        }
+                        default: {
+                            $helper_name     = $match;
+                            $helper_function = 'registerFunction';
+                        }
+                    }
+
+                    if (!$name_policy || ($name_policy & self::HELPER_ASIS) > 0) {
+                        $this->$helper_function($helper_name, $callback);
+                    }
+
+                    if (($name_policy & self::HELPER_CAMELCASE) > 0) {
+                        $alias = str_replace(" ", "", ucwords(str_replace("_", " ", $helper_name)));
+                        if (strlen($alias))
+                            $alias[0] = strtolower($alias[0]);
+                        $this->$helper_function($alias, $callback);
+                    }
+
+                    if (($name_policy & self::HELPER_UNDERSCORE) > 0) {
+                        $alias = strtolower(preg_replace('/(?<=\\w)([A-Z])/', '_\\1', $helper_name));
+                        $this->$helper_function($alias, $callback);
+                    }
+
+                    if (($name_policy & self::HELPER_DASH) > 0) {
+                        $alias = strtolower(preg_replace('/(?<=\\w)([A-Z])/', '-\\1', $helper_name));
+                        $this->$helper_function($alias, $callback);
+                    }
+
+                }
+            }
+            $ret = true;
         }
 
         return $ret;

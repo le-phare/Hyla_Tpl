@@ -103,6 +103,14 @@ with special char: "\}{\} <!-- -->\'---
             <li>Mix (trim|lower|ucwords|escape) : {$words|trim|lower|ucwords|escape}</li>
         </ul>
     </li>
+    <li>registerHelpers: call function « getDate » : {!getDate:'2012-02-23', '%d/%m/%Y'}</li>
+    <li>registerHelpers: call function « today » : {!today: '%A, %e %B %Y'}</li>
+    <li>registerHelpers: call function « today » without parameters : {!today}</li>
+    <li>registerHelpers: call var function « AsDate » : {$tomorrow|AsDate}</li>
+    
 </ul>
+
+
+
 
 <hr />
